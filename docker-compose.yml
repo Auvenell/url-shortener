@@ -1,0 +1,79 @@
+# For more information: https://laravel.com/docs/sail
+version: '3'
+services:
+    url-shortener.test:
+        build:
+            context: ./vendor/laravel/sail/runtimes/8.0
+            dockerfile: Dockerfile
+            args:
+                WWWGROUP: '${WWWGROUP}'
+        image: sail-8.0/app
+        platform: linux/amd64
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        ports:
+            - 8000:80
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - sail
+        depends_on:
+            - mysql
+            - redis
+            - meilisearch
+    adminer:
+        image: adminer
+        restart: always
+        ports:
+            - 8080:8080
+        networks:
+            - sail
+    mysql:
+        image: 'mysql:8.0'
+        platform: linux/amd64
+        ports:
+            - 4306:3306
+        environment:
+            MYSQL_USER: urls
+            MYSQL_DATABASE: url-shortener
+            MYSQL_ROOT_PASSWORD: root
+        volumes:
+            - ./mysql:/var/lib/mysql'
+        networks:
+            - sail
+    redis:
+        image: 'redis:alpine'
+        platform: linux/amd64
+        ports:
+            - '${FORWARD_REDIS_PORT:-6379}:6379'
+        volumes:
+            - 'sailredis:/data'
+        networks:
+            - sail
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            retries: 3
+            timeout: 5s
+    mailhog:
+        image: 'mailhog/mailhog:latest'
+        platform: linux/amd64
+        ports:
+            - '${FORWARD_MAILHOG_PORT:-1025}:1025'
+            - '${FORWARD_MAILHOG_DASHBOARD_PORT:-8025}:8025'
+        networks:
+            - sail
+networks:
+    sail:
+        driver: bridge
+volumes:
+    sailmysql:
+        driver: local
+    sailredis:
+        driver: local
+    sailmeilisearch:
+        driver: local
