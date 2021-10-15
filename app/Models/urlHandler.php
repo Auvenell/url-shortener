@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class urlHandler extends Model
 {
     use HasFactory;
+    public $timestamps = false;
 
-    protected $fillable = ['long_url', 'short_url'];
+    protected $fillable = ['long_url'];
 }

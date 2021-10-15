@@ -15,16 +15,11 @@ class CreateUrlHandlersTable extends Migration
     {
         Schema::create('url_handlers', function (Blueprint $table) {
             $table->id();
-            $table->string('long_url', 2048);
-            $table->string('short_url', 100);
-            $table->timestamp('created_at', $precision = 0);
-            $table->integer('hit_count');
-        });
-
-        Schema::create('access_log', function (Blueprint $table) {
-            $table->id();
-            $table->integer('pair_id');
-            $table->timestamps($precision = 0);
+            $table->string('long_url', 2048)->default('');
+            $table->string('short_url', 100)->default('');
+            $table->tinyInteger('status')->default('1');
+            $table->integer('hit_count')->default(0);
+            $table->timestamp('created_at', $precision = 0)->nullable();
         });
     }
 
@@ -36,6 +31,5 @@ class CreateUrlHandlersTable extends Migration
     public function down()
     {
         Schema::dropIfExists('url_handlers');
-        Schema::dropIfExists('access_log');
     }
 }

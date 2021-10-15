@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\UrlHandlerController;
+use App\Models\urlHandler;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,6 +19,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/app', function () {
-    return view('app');
+Route::get('/key-generate', function () {
+    return view('keyGenerationService');
 });
+
+Route::post('/shorten', [UrlHandlerController::class, 'shorten'])->name('shorten.url');
+Route::get('/top100', [UrlHandlerController::class, 'top100'])->name('top100.url');
+
+Route::fallback([UrlHandlerController::class, 'redirectUrl'])->name('redirectUrl.url');
