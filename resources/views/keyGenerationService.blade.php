@@ -29,6 +29,10 @@
   $generatedKeys = keyGenerationService($chars, 1);
   $generatedKeys += keyGenerationService($chars, 2);
   $generatedKeys += keyGenerationService($chars, 3);
+  //$generatedKeys += keyGenerationService($chars, 4);
+  //$generatedKeys += keyGenerationService($chars, 5);
+  //$generatedKeys += keyGenerationService($chars, 6);
+
   $servername = "mysql";
   $username = "root";
   $password = "root";
