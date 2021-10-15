@@ -1,64 +1,77 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+## URL Shortener with Key Generation Service
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Installation
 
-## About Laravel
+Composer, Docker Compose, & Apache running PHP 8 are necessary to run and test this application
+1. Clone the repo into a working directory: `git clone https://github.com/Auvenell/url-shortener.git`
+2. `cd url-shortener && composer update`
+3. `docker-compose up -d`
+4. Application should be running `http://localhost:8000` 
+    - Container is named `sail-8.0/app`
+    - Get Container ID with `docker ps`
+    - Enter Container `docker exec -it <container ID> /bin/bash`
+5. In container run: `php artisan migrate`
+6. Enter MySQL container using method above and in container run:
+    - `ALTER url-shortener url_handlers CHARACTER SET utf8 COLLATE utf8mb4_0900_as_cs;`
+7. Open Browser and navigate to [http://localhost:8000/key-generate](http://localhost:8000/key-generate)
+    - PLEASE WAIT for message: "Key Generation - Success"
+8. This application is installed and ready to use 
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Using the API
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- `/api/shorten`: To input a URL and receive a shortened URL via the API, format the request as follows:
+    - `curl -X POST -d "url=<VALID URL>" http://localhost:8000/api/shorten`
+    - Responses will be JSON format: `[{"Original URL":"<VALID URL>","Shortened URL":"http://localhost:8000/i","Access/Hit Count":0}]`
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- `/api/check`: To input an already shortened URL and receive its target/original URL via the API, format the request as follows:
+    - `curl -X POST -d "checkUrl=http://localhost:8000/<URL SUFFIX>" http://localhost:8000/api/check`
+    - Responses will be JSON format: `[{"Checking URL":"http://localhost:8000/a","Directs to":"<VALID URL>"}]`
 
-## Learning Laravel
+- `/api/toplist`: To retrieve a list of the top (up to 100) most visited short URLs via the API, format the request as follows:
+    - `curl http://localhost:8000/api/toplist`
+    - Responses will be JSON format with the following nodes: 
+        - Access/Hit Count
+        - Shortened URL
+        - Original URL
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Using the web client
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- Main Page `http://localhost:8000`
+    - Enter valid URL into the text input field and press shorten - the page will return a hyperlink with the shortened URL
+    - Clicking the hyperlink will navigate to the shortened url, then be redirected to the original (target)
 
-## Laravel Sponsors
+- Top List `http://localhost:8000/top100`
+    - Navigate to this page in order to see an organized list of the top accessed short URLS (up to 100)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## Project Design 
 
-### Premium Partners
+- There are a variety of ways to setup a url shortening service; this project implements a key generation script to fulfill the primary requirement of always returning the shortest URL possible. It also accomplishes the goal of keeping a production application as light as possible by reducing the amount of processing/hashing/matching aganist the database per visitor request 
+    - The Key Generation script prepopulates the `short_url` column of the `url_handlers` table with every possible combination of characters in base64 up to 3 characters in length for a total of 262144 unique URLs (`/a`, `/b`, `/c` ... `/aa`, `/ab`, `/ac` ... `/aaa`, `/aab`, `/aac`)
+    - Up to 6.87 billion keys can be pre-generated by uncommenting `lines 32-34` in `resources/views/keyGenerationService.blade.php` before running `http:/localhost:8000/key-generate` during setup (WARNING be prepared to wait for database operations to complete when going beyond ~260k records)
+    - Incoming requests for shortened URLs are 'slotted' into the first available row and assigned a pre-generated short URL; this ensures that the shortest url possible is always assigned to the most recent visitor
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[CMS Max](https://www.cmsmax.com/)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
 
-## Contributing
+## Project Challenges
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- Issues with Docker on an M1 Mac - I needed to use the base laravel docker setup .yml files due to differences between my typical work PC and my development machine
+    - Resolved: Unfortunately this meant using the apache and php combination installed on the host  
 
-## Code of Conduct
+- Designing the Key Generation Service
+    - Resolved: Took a few iterations before this was done correctly - several db migrations and rollbacks
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- Getting all URLs that don't match a defined route to point to the `redirect`URL method 
+    - Resolved: After mucking through HTTP exceptions, found success using `Route::fallback` in `routes/web.php`  
 
-## Security Vulnerabilities
+- Trouble returning the proper URL when dealing with lowercase vs uppercase and mixed case URLs
+    - Resolved: Switching table collation to `utf8mb4_0900_as_cs` to retrieve case sensitive results
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Future Improvements
 
-## License
+More time could see several improvements for the project
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- An expiration service that would free up old or unused shortened URLs so that shorter URLs may be provided to newer visitors
+- The bonus unfortunately not completed due to time constraints - which would be implemented via adding a checkbox flag on the homepage. Checking the box when submitting a URL for shortening would mark it as NSFW (which would be represented in the database with `2` in column `status`). New logic in the `redirectURL` method of the `UrlHandlerController` would check for `status = 2` and provide a boolean to be interpreted on urlRedirect.blade.php that would increase redirect time to 10 seconds (up from the standard 3 second redirect)
+- User accounts and authentication to permit storage of URLs by account
+- API security with token generation and authentication
+- Integrate with a third-party NSFW blacklist to (domain level) block NSFW sites from being stored in the db
+- Misc clean of API responses and better error handling across the board
